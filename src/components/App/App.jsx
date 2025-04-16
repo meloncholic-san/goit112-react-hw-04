@@ -1,75 +1,90 @@
 import { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import SearchForm from '../SearchForm/SearchForm';
-import ArticleList from '../ArticleList/ArticleList';
-import { fetchArticles } from '../../articleService';
+import ClipLoader from "react-spinners/ClipLoader";
+import { fetchGallery } from '../../GalleryService';
 import css from './App.module.css';
-
-// Коли відбувається http запит?
-//   1) Зміна терміну пошуку searchTerm (сабміт форми)
-//   2) Зміна номеру групи page (Клnuік по load more)
+import ImageGallery from '../ImageGallery/ImageGallery';
+import SearchBar from '../SearchBar/SearchBar';
+import ImageModal from '../ImageModal/ImageModal';
 
 export default function App() {
-    const [articles, setArticles] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+
+    const [photocards, setPhotocards] = useState([]);
+    const [searchItem, setSearchItem] = useState('');
     const [page, setPage] = useState(1);
+    const [error, setError] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
-    const handleSearch = (topic) => {
-        setSearchTerm(`${topic}/${Date.now()}`);
+    const handleSearch = (query) => {
+        setSearchItem(query);
+        setPhotocards([]);
         setPage(1);
-        setArticles([]);
+    }
+
+    const handleImageClick = (imageUrl) => {
+        setSelectedImage(imageUrl);
     };
 
-    const handleLoadMoreClick = () => {
-        setPage(page + 1);
+    const closeModal = () => {
+        setSelectedImage(null);
     };
 
-    useEffect(() => {
-        if (searchTerm === '') {
-            return;
+    async function getPhotocards() {
+        try {
+            setError(false);
+            setIsLoading(true);
+            const data = await fetchGallery(searchItem, page);
+            // setPhotocards(data)
+            setPhotocards((prevPhotocards) => {
+                return [...prevPhotocards, ...data];
+            })
+            
         }
-
-        async function getData() {
-            try {
-                setError(false);
-                setIsLoading(true);
-                const data = await fetchArticles(
-                    searchTerm.split('/')[0],
-                    page
-                );
-                setArticles((prevArticles) => {
-                    return [...prevArticles, ...data];
-                });
-            } catch {
+        catch {
+                toast.error('Please reload a page there was an error!')
                 setError(true);
-                toast.error('Please reload there was an error!!!!');
-            } finally {
-                setIsLoading(false);
-            }
         }
+        finally {
+            setIsLoading(false);
+        }
+    }
 
-        getData();
-    }, [page, searchTerm]);
+
+    useEffect (() =>{
+
+        if (!searchItem) return;
+
+        getPhotocards();
+    }, [searchItem, page])
 
     return (
-        <div className={css.container}>
-            <SearchForm onSearch={handleSearch} />
 
-            {error && <b>Whoops there was an error plz reload...</b>}
-
-            {articles.length > 0 && <ArticleList items={articles} />}
-
-            {isLoading && <b>Loading data, please wait...</b>}
-
-            {articles.length > 0 && !isLoading && (
-                <button onClick={handleLoadMoreClick}>
-                    Load more articles {page}
-                </button>
+        <>
+        <SearchBar onSearch = {handleSearch}/>
+        {isLoading && (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                    <ClipLoader color="#3f51b5" size={40} />
+                </div>
             )}
 
-            <Toaster position="top-right" />
-        </div>
-    );
+        {error && <b>Whoops, there was an error, please reload this page...</b>}
+        {photocards.length > 0 && (
+        <ImageGallery 
+            galleryItems={photocards}
+            updatePage={() => setPage(prev => prev + 1)}
+            onImageClick={handleImageClick}
+        />
+        )}
+        {selectedImage && (
+            <ImageModal
+                isOpen={true}
+                onClose={closeModal}
+                imageUrl={selectedImage}
+            />
+        )}
+
+        <Toaster />
+        </>
+    )
 }
