@@ -1,8 +1,7 @@
 import styles from './ImageGallery.module.css';
 import ImageCard from '../ImageCard/ImageCard';
-import LoadMoreBtn from '../LoadMoreBtn/LoadMoreBtn';
 
-export default function ImageGallery({ galleryItems, updatePage, onImageClick }) {
+export default function ImageGallery({ galleryItems, onImageClick }) {
     return (
         <>
             <ul className={styles.gallery}>
@@ -12,8 +11,7 @@ export default function ImageGallery({ galleryItems, updatePage, onImageClick })
                     </li>
                 ))}
             </ul>
-            {galleryItems.length > 0 && ( <LoadMoreBtn onClick={updatePage}/>
-            )}
+
         </>
     );
 }

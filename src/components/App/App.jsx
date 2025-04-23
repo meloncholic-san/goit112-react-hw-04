@@ -6,9 +6,9 @@ import css from './App.module.css';
 import ImageGallery from '../ImageGallery/ImageGallery';
 import SearchBar from '../SearchBar/SearchBar';
 import ImageModal from '../ImageModal/ImageModal';
+import LoadMoreBtn from '../LoadMoreBtn/LoadMoreBtn'
 
 export default function App() {
-
     const [photocards, setPhotocards] = useState([]);
     const [searchItem, setSearchItem] = useState('');
     const [page, setPage] = useState(1);
@@ -72,7 +72,6 @@ export default function App() {
         {photocards.length > 0 && (
         <ImageGallery 
             galleryItems={photocards}
-            updatePage={() => setPage(prev => prev + 1)}
             onImageClick={handleImageClick}
         />
         )}
@@ -83,7 +82,8 @@ export default function App() {
                 imageUrl={selectedImage}
             />
         )}
-
+        {photocards.length > 0 && ( <LoadMoreBtn onClick={() => setPage(prev => prev + 1)}/>
+            )}
         <Toaster />
         </>
     )
